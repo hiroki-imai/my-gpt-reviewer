@@ -1,0 +1,237 @@
+name: 'GPT Reviewer'
+description: 'AI-based PR Reviewer & Summarizer with Chat Capabilities'
+branding:
+  icon: 'git-pull-request'
+  color: 'orange'
+author: 'AsiaQuest Developer (Representative: h-imai, imai@asia-quest.jp)'
+inputs:
+  debug:
+    required: false
+    description: 'Enable debug mode'
+    default: 'false'
+  max_files:
+    required: false
+    description: 'サマライズとレビューする最大ファイル数を制御します。0以下は無制限を意味します。'
+    default: '150'
+  review_simple_changes:
+    required: false
+    description: '変更が単純な場合でもレビューを行うかどうかを制御します。'
+    default: 'false'
+  review_comment_lgtm:
+    required: false
+    description: 'パッチがLGTMであってもコメントを残すかどうかを制御します。'
+    default: 'false'
+  path_filters:
+    required: false
+    description: |
+      特定のパスパターンを持つファイルをレビューから除外するためのパスフィルターを指定します。
+      Ex. "src/**.py", "!dist/**"
+
+      - https://docs.github.com/en/actions/using-workflows/workflow-syntax-for-github-actions#onpushpull_requestpull_request_targetpathspaths-ignore
+      - https://github.com/isaacs/minimatch
+    default: |
+      !dist/**
+      !**/*.app
+      !**/*.bin
+      !**/*.bz2
+      !**/*.class
+      !**/*.db
+      !**/*.csv
+      !**/*.tsv
+      !**/*.dat
+      !**/*.dll
+      !**/*.dylib
+      !**/*.egg
+      !**/*.glif
+      !**/*.gz
+      !**/*.xz
+      !**/*.zip
+      !**/*.7z
+      !**/*.rar
+      !**/*.zst
+      !**/*.ico
+      !**/*.jar
+      !**/*.tar
+      !**/*.war
+      !**/*.lo
+      !**/*.log
+      !**/*.mp3
+      !**/*.wav
+      !**/*.wma
+      !**/*.mp4
+      !**/*.avi
+      !**/*.mkv
+      !**/*.wmv
+      !**/*.m4a
+      !**/*.m4v
+      !**/*.3gp
+      !**/*.3g2
+      !**/*.rm
+      !**/*.mov
+      !**/*.flv
+      !**/*.iso
+      !**/*.swf
+      !**/*.flac
+      !**/*.nar
+      !**/*.o
+      !**/*.ogg
+      !**/*.otf
+      !**/*.p
+      !**/*.pdf
+      !**/*.doc
+      !**/*.docx
+      !**/*.xls
+      !**/*.xlsx
+      !**/*.ppt
+      !**/*.pptx
+      !**/*.pkl
+      !**/*.pickle
+      !**/*.pyc
+      !**/*.pyd
+      !**/*.pyo
+      !**/*.pub
+      !**/*.pem
+      !**/*.rkt
+      !**/*.so
+      !**/*.ss
+      !**/*.eot
+      !**/*.exe
+      !**/*.pb.go
+      !**/*.lock
+      !**/*.ttf
+      !**/*.yaml
+      !**/*.yml
+      !**/*.cfg
+      !**/*.toml
+      !**/*.ini
+      !**/*.mod
+      !**/*.sum
+      !**/*.work
+      !**/*.json
+      !**/*.mmd
+      !**/*.svg
+      !**/*.jpeg
+      !**/*.jpg
+      !**/*.png
+      !**/*.gif
+      !**/*.bmp
+      !**/*.tiff
+      !**/*.webm
+      !**/*.woff
+      !**/*.woff2
+      !**/*.dot
+      !**/*.md5sum
+      !**/*.wasm
+      !**/*.snap
+      !**/*.parquet
+      !**/*.lock
+      !**/gen/**
+      !**/_gen/**
+      !**/generated/**
+      !**/@generated/**
+      !**/vendor/**
+      !**/*.min.js
+      !**/*.min.js.map
+      !**/*.min.js.css
+      !**/*.tfstate
+      !**/*.tfstate.backup
+  disable_review:
+    required: false
+    description: 'コードレビューをスキップし、サマリーのみを提供するかどうかを制御します。'
+    default: 'false'
+  disable_release_notes:
+    required: false
+    description: 'リリースノートを無効にするかどうかを制御します。'
+    default: 'false'
+  openai_base_url:
+    required: false
+    description: 'OpenAI APIインターフェースのURL'
+    default: 'https://api.openai.com/v1'
+  openai_light_model:
+    required: false
+    description:
+      'ファイルのdiffを要約するなどの単純なタスクに使用するモデル'
+    default: 'gpt-3.5-turbo'
+  openai_heavy_model:
+    required: false
+    description: 'コードレビューなどの複雑なタスクに使用するモデル'
+    default: 'gpt-4'
+  openai_model_temperature:
+    required: false
+    description: 'GPTモデルの温度'
+    default: '0.05'
+  openai_retries:
+    required: false
+    description:
+      'タイムアウトやエラーの場合にOpenAI APIをリトライする回数'
+    default: '5'
+  openai_timeout_ms:
+    required: false
+    description: 'OpenAI API呼び出しのタイムアウト（ミリ秒）'
+    default: '360000'
+  openai_concurrency_limit:
+    required: false
+    description: 'OpenAIサーバーへの同時API呼び出し数'
+    default: '6'
+  github_concurrency_limit:
+    required: false
+    description: 'GitHubへの同時API呼び出し数'
+    default: '6'
+  system_message:
+    required: false
+    description: 'OpenAIに送信されるシステムメッセージ'
+    default: |
+      あなたは @ai-reviewer(別名 github-actions[bot]）で、OpenAIによって訓練された言語モデルです。
+      あなたの目的は、非常に経験豊富なソフトウェアエンジニアとして機能し、コードの一部を徹底的にレビューし、
+      以下のようなキーエリアを改善するためのコードスニペットを提案することです：
+        - ロジック
+        - セキュリティ
+        - パフォーマンス
+        - データ競合
+        - 一貫性
+        - エラー処理
+        - 保守性
+        - モジュール性
+        - 複雑性
+        - 最適化
+        - ベストプラクティス: DRY, SOLID, KISS
+
+      些細なコードスタイルの問題や、コメント・ドキュメントの欠落についてはコメントしないでください。
+      重要な問題を特定し、解決して全体的なコード品質を向上させることを目指してください。
+      細かい問題は意図的に無視してください。
+  summarize:
+    required: false
+    description: '最終的な要約応答のプロンプト'
+    default: |
+      次の内容でmarkdownフォーマットを使用して、最終的な回答を提供してください。
+
+      - *ウォークスルー*: 特定のファイルではなく、全体の変更に関する高レベルの要約を80語以内で。
+      - *変更点*: ファイルとその要約のテーブル。スペースを節約するために、同様の変更を持つファイルを1行にまとめてもよいです。
+      - *つぶやき*: 変更点の下には、気まぐれな短いつぶやきを入れます。つぶやきを引用文としてフォーマットするには">"を使い、絵文字も自由に使ってください。 
+
+      GitHubのプルリクエストにコメントとして追加されるこの要約には、追加のコメントを避けてください。
+  summarize_release_notes:
+    required: false
+    description:
+      'サマライズステージと同じチャットでリリースノートを生成するためのプロンプト'
+    default: |
+      このプルリクエストのために、その目的とユーザーストーリーに焦点を当てて、markdownフォーマットで簡潔なリリースノートを作成してください。
+      変更は次のように分類し箇条書きにすること:
+      "New Feature", "Bug fix", "Documentation", "Refactor", "Style",
+      "Test", "Chore", "Revert"
+      例.
+      ```
+      - New Feature: UIに統合ページが追加されました
+      ```
+      回答は50-100語以内にしてください。この回答はそのままリリースノートに使用されるので、追加のコメントは避けてください。
+  language:
+    required: false
+    description: '応答言語のISOコード'
+    default: ja-JP
+  bot_icon:
+    required: false
+    description: 'The icon for the bot'
+    default: '<img src="https://avatars.githubusercontent.com/u/41667130" alt="Image description" width="20" height="20">'
+runs:
+  using: 'node16'
+  main: 'dist/index.js'
